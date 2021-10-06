@@ -1,32 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { createMuiTheme } from '@material-ui/core/styles';
-import { ThemeProvider } from '@material-ui/styles';
-
 import './index.css';
 import App from './App';
 import './i18';
 import * as serviceWorker from './serviceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
 
-const theme = createMuiTheme({
-    typography: {
-        fontFamily: [
-            'Poppins',
-            'Inter',
-            'Roboto',
-            '"Helvetica Neue"',
-            'Arial',
-            'sans-serif',
-        ].join(','),
-    },
-});
-
 ReactDOM.render(
-    <ThemeProvider theme={theme}>
-        <App />
-    </ThemeProvider>,
+    <App />,
     document.getElementById('root')
 );
 

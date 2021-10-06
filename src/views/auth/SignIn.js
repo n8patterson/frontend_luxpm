@@ -1,6 +1,6 @@
-import React, { Redirect } from 'react';
+import React from 'react';
+import { Link, Redirect } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
-import { Typography } from '@material-ui/core';
 import { useTranslation } from 'react-i18next';
 import Alert from '@material-ui/lab/Alert';
 import Button from '@material-ui/core/Button';
@@ -9,50 +9,59 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import EmailIcon from '@material-ui/icons/Email';
 import Grid from '@material-ui/core/Grid';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import LockIcon from '@material-ui/icons/Lock';
 import TextField from '@material-ui/core/TextField';
 
-import { sendPassword } from '../../services/loginService';
+import { loginUser } from '../../services/loginService';
 import { validateEmail } from '../../utils/validation';
-import { baseStyles, forgotPasswordStyles } from '../../style/styles';
+import { baseStyles, loginStyles } from '../../style/styles';
 import AuthHeader from '../core/AuthHeader';
 
 const useStyles = makeStyles(() => ({
   ...baseStyles,
-  ...forgotPasswordStyles,
+  ...loginStyles,
 }));
 
-const ForgotPassword = ({ token }) => {
+const SignIn = ({ token, setToken }) => {
   const classes = useStyles();
   const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
-  const [message, setMessage] = React.useState('');
-  const [validEmail, isValidEmail] = React.useState(true);
+  const [validEmail, setValidEmail] = React.useState(true);
   const { t } = useTranslation();
+
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
-    isValidEmail(validateEmail(event.target.value));
+    setValidEmail(validateEmail(event.target.value));
   };
 
-  const handleForgotPassword = async (event) => {
+  const handlePasswordChange = (event) => {
+    setPassword(event.target.value);
+  };
+
+  const handleSignIn = async (event) => {
     event.preventDefault();
 
     setError('');
     
     const data = {
       username: email,
+      hash: password,
     };
 
     try {
-      const isLoggedIn = await sendPassword(data);
+      const isLoggedIn = await loginUser(data);
       if (isLoggedIn) {
         if (isLoggedIn.success) {
-          setMessage(isLoggedIn.message);
+          localStorage.setItem('token', isLoggedIn.token);
+          localStorage.setItem('email', isLoggedIn.username);
+          setToken(isLoggedIn);
         } else {
-            throw new Error(isLoggedIn.message)
+          throw new Error(isLoggedIn.message)
         }
       }
     } catch (err) {
-        setError(err?.message || t('Email is incorrect!'));
+      setError(err?.message || t('Email or Password are incorrect!'));
     }
   };
 
@@ -63,31 +72,14 @@ const ForgotPassword = ({ token }) => {
   return (
     <Container component='main' maxWidth='xs'>
       <CssBaseline />
-      <AuthHeader
-        mainMessage='Forgot Password?'
-        secondaryMessage={
-          message ? '' : 'Please enter the email associated to your account.'
-        }
-      />
+      <AuthHeader mainMessage='Login' />
       <div className={classes.mainContainer}>
         {error ? (
-          <Alert
-            className={classes.alert}
-            style={{ position: 'absolute' }}
-            variant='filled'
-            severity='error'
-          >
+          <Alert className={classes.alert} variant='filled' severity='error'>
             {error}
           </Alert>
         ) : null}
-        {message !== '' && (
-          <Typography component='div'>
-            <strong>
-              <center>{t(message)}</center>
-            </strong>
-          </Typography>
-        )}
-        <form className={classes.form} onSubmit={handleForgotPassword}>
+        <form className={classes.form} onSubmit={handleSignIn}>
           <Grid
             className={classes.textFieldGrid}
             container
@@ -118,6 +110,39 @@ const ForgotPassword = ({ token }) => {
                 onChange={handleEmailChange}
               />
             </Grid>
+            <Grid item>
+              <TextField
+                className={classes.inputFields}
+                variant='standard'
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <LockIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                margin='normal'
+                required
+                name='password'
+                label={t('Password')}
+                type='password'
+                id='password'
+                autoComplete='current-password'
+                onChange={handlePasswordChange}
+              />
+            </Grid>
+          </Grid>
+          <Grid
+            className={classes.forgotPasswordGrid}
+            container
+            direction='column'
+            alignItems='flex-end'
+          >
+            <Grid className={classes.forgotPass} item>
+              <Link to='/forgotPassword' variant='body2'>
+                {t('Find Password')}
+              </Link>
+            </Grid>
           </Grid>
           <Grid
             className={classes.submitGrid}
@@ -132,14 +157,19 @@ const ForgotPassword = ({ token }) => {
                 variant='contained'
                 className={classes.loginButton}
               >
-                {t('Submit Email')}
+                {t('Sign In')}
               </Button>
+            </Grid>
+            <Grid item>
+              <Link to='/' variant='body2'>
+                {t("Don't have an account")}
+              </Link>
             </Grid>
           </Grid>
         </form>
       </div>
     </Container>
   );
-}
+};
 
-export default ForgotPassword;
+export default SignIn;
